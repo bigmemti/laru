@@ -1,4 +1,4 @@
-import { type BreadcrumbItem, type SharedData } from '@/types';
+import { type BreadcrumbItem, type SharedData, type Method } from '@/types';
 import { Transition } from '@headlessui/react';
 import { Head, Link, useForm, usePage } from '@inertiajs/react';
 import { FormEventHandler } from 'react';
@@ -22,20 +22,24 @@ const breadcrumbs: BreadcrumbItem[] = [
 type ProfileForm = {
     username: string;
     email: string;
+    image: File | null;
+    _method: Method;
 }
 
 export default function Profile({ mustVerifyEmail, status }: { mustVerifyEmail: boolean; status?: string }) {
     const { auth } = usePage<SharedData>().props;
 
-    const { data, setData, patch, errors, processing, recentlySuccessful } = useForm<Required<ProfileForm>>({
+    const { data, setData, post, errors, processing, recentlySuccessful } = useForm<Required<ProfileForm>>({
         username: auth.user.username,
         email: auth.user.email,
+        image: null,
+        _method: 'PATCH',
     });
 
     const submit: FormEventHandler = (e) => {
         e.preventDefault();
 
-        patch(route('profile.update'), {
+        post(route('profile.update'), {
             preserveScroll: true,
         });
     };
@@ -50,6 +54,14 @@ export default function Profile({ mustVerifyEmail, status }: { mustVerifyEmail: 
 
                     <form onSubmit={submit} className="space-y-6">
                         <div className="grid gap-2">
+                            <div className="flex items-center gap-2 justify-center">
+                                <Label htmlFor="image" className="cursor-pointer self-center hover:opacity-70 transition-opacity duration-300 ease-out">
+                                    <img src={auth.user.image} alt="Profile" className="h-32 w-32 rounded-full" />
+                                </Label>
+                            </div>
+                            <Input id="image" type="file" accept="image/*" className="hidden" name="image" onChange={(e) => setData('image', e.target.files?.[0])} />
+                            <InputError message={errors.image} />
+
                             <Label htmlFor="username">Username</Label>
 
                             <Input

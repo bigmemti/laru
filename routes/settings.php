@@ -5,9 +5,13 @@ use App\Http\Controllers\Settings\ProfileController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
+use function Pest\Laravel\get;
+
 Route::middleware('auth')->group(function () {
     Route::redirect('settings', 'settings/profile');
 
+    Route::get('create-profile', [ProfileController::class, 'create'])->name('profile.create');
+    Route::post('create-profile', [ProfileController::class, 'store'])->name('profile.store');
     Route::get('settings/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('settings/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('settings/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');

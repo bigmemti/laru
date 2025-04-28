@@ -8,11 +8,38 @@ use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\File;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class ProfileController extends Controller
 {
+    /**
+     * Show the form for creating a new resource.
+     */
+    public function create()
+    {
+        return Inertia::render('settings/create-profile');
+    }
+
+    /**
+     * Store a newly created resource in storage.
+     */
+    public function store(Request $request)
+    {
+        $request->validate([
+            'username' => 'required|string|max:255|unique:users',
+            'image' => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+        ]);
+
+        $request->user()->update([
+            'username' => $request->username,
+            'image' => $request->image->store('profiles', 'public'),
+        ]);
+
+        return to_route('dashboard');
+    }
+
     /**
      * Show the user's profile settings page.
      */
@@ -29,10 +56,18 @@ class ProfileController extends Controller
      */
     public function update(ProfileUpdateRequest $request): RedirectResponse
     {
+        if ($request->hasFile('image')) {
+            File::delete(storage_path('app/public/' . $request->user()->image));
+        }
+
         $request->user()->fill($request->validated());
 
         if ($request->user()->isDirty('email')) {
             $request->user()->email_verified_at = null;
+        }
+
+        if ($request->hasFile('image')) {
+            $request->user()->image = $request->image->store('profiles', 'public');
         }
 
         $request->user()->save();
